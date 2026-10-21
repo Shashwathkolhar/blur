@@ -23,6 +23,14 @@ let drag = null;         // { x0, y0, x1, y1, shift } while dragging
 let tool = 'pixelate';   // pixelate | rect | ellipse | line | arrow
 let color = '#ef4444';
 
+// Show ⌘ on Apple devices and Ctrl+ everywhere else.
+const isMac = /mac|iphone|ipad/i.test(
+  navigator.userAgentData?.platform || navigator.platform || navigator.userAgent
+);
+const MOD = isMac ? '⌘' : 'Ctrl+';
+document.querySelectorAll('.mod').forEach((el) => (el.textContent = MOD));
+undoBtn.title = `Undo (${MOD}Z)`;
+
 const HINTS = {
   pixelate: 'Drag across anything sensitive to pixelate it',
   rect: 'Drag to draw a box · hold Shift for a square',
@@ -304,7 +312,7 @@ function setTool(t) {
   document.querySelectorAll('.tool').forEach((b) => b.classList.toggle('active', b.dataset.tool === t));
   pixelOpts.hidden = t !== 'pixelate';
   colorOpts.hidden = t === 'pixelate';
-  hint.textContent = `${HINTS[t]} · ⌘V or drop to swap image`;
+  hint.textContent = `${HINTS[t]} · ${MOD}V or drop to swap image`;
 }
 
 function setColor(c) {
@@ -312,6 +320,7 @@ function setColor(c) {
   document.querySelectorAll('.swatch').forEach((s) => s.classList.toggle('active', s.dataset.color === c));
 }
 
+setTool(tool);
 document.querySelectorAll('.tool').forEach((b) => b.addEventListener('click', () => setTool(b.dataset.tool)));
 document.querySelectorAll('.swatch').forEach((s) => s.addEventListener('click', () => setColor(s.dataset.color)));
 
