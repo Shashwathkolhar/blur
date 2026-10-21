@@ -4,12 +4,14 @@ const drop = $('drop');
 const fileInput = $('fileInput');
 const stage = $('stage');
 const actionsBar = $('actions');
+const area = $('area');
 const canvas = $('canvas');
 const ctx = canvas.getContext('2d');
 const sel = $('sel');
 const blockSize = $('blockSize');
 const blockOut = $('blockOut');
 const undoBtn = $('undoBtn');
+const downloadBtn = $('downloadBtn');
 const toast = $('toast');
 const dropOverlay = $('dropOverlay');
 const pixelOpts = $('pixelOpts');
@@ -19,9 +21,13 @@ const hint = $('hint');
 let image = null;        // original, never modified
 let fileName = 'screenshot';
 let actions = [];        // pixelate regions and shapes, drawn in order
+let version = 0;         // bumps whenever actions change
 let drag = null;         // { x0, y0, x1, y1, shift } while dragging
 let tool = 'pixelate';   // pixelate | rect | ellipse | line | arrow
 let color = '#ef4444';
+
+// Phones and tablets: no keyboard shortcuts, no drag & drop, save through the share sheet.
+const isTouch = matchMedia('(pointer: coarse)').matches;
 
 // Show ⌘ on Apple devices and Ctrl+ everywhere else.
 const isMac = /mac|iphone|ipad/i.test(
@@ -31,13 +37,26 @@ const MOD = isMac ? '⌘' : 'Ctrl+';
 document.querySelectorAll('.mod').forEach((el) => (el.textContent = MOD));
 undoBtn.title = `Undo (${MOD}Z)`;
 
+if (isTouch) {
+  $('dropTitle').textContent = 'Choose a screenshot';
+  $('dropSub').textContent = 'Tap anywhere here to pick one from your photos';
+  downloadBtn.textContent = 'Save';
+}
+
+// [what the tool does, what Shift adds]
 const HINTS = {
-  pixelate: 'Drag across anything sensitive to pixelate it',
-  rect: 'Drag to draw a box · hold Shift for a square',
-  ellipse: 'Drag to draw a circle · hold Shift for a perfect circle',
-  line: 'Drag to draw a line · hold Shift to snap the angle',
-  arrow: 'Drag from tail to tip · hold Shift to snap the angle',
+  pixelate: ['Drag across anything sensitive to pixelate it', ''],
+  rect: ['Drag to draw a box', 'hold Shift for a square'],
+  ellipse: ['Drag to draw a circle', 'hold Shift for a perfect circle'],
+  line: ['Drag to draw a line', 'hold Shift to snap the angle'],
+  arrow: ['Drag from tail to tip', 'hold Shift to snap the angle'],
 };
+
+function hintFor(t) {
+  const [base, shift] = HINTS[t];
+  if (isTouch) return base.replace('Drag', 'Drag your finger');
+  return [base, shift, `${MOD}V or drop to swap image`].filter(Boolean).join(' · ');
+}
 
 // ---------- Loading ----------
 
@@ -56,13 +75,14 @@ function loadFile(file, source) {
   img.onload = () => {
     URL.revokeObjectURL(url);
     image = img;
-    actions = [];
     canvas.width = img.naturalWidth;
     canvas.height = img.naturalHeight;
     drop.hidden = true;
     stage.hidden = false;
     actionsBar.hidden = false;
-    render();
+    actions = [];
+    changed();
+    fitCanvas();
     if (source) showToast(source);
   };
   img.onerror = () => {
@@ -125,6 +145,17 @@ document.addEventListener('paste', (e) => {
   e.preventDefault();
   loadFile(file, image ? 'Pasted new image' : 'Pasted');
 });
+
+// ---------- Layout ----------
+
+// Shrink the canvas to fit the space left under the toolbar (never enlarge it).
+function fitCanvas() {
+  if (!image) return;
+  const s = Math.min(area.clientWidth / canvas.width, area.clientHeight / canvas.height, 1);
+  canvas.style.width = Math.floor(canvas.width * s) + 'px';
+  canvas.style.height = Math.floor(canvas.height * s) + 'px';
+}
+new ResizeObserver(fitCanvas).observe(area);
 
 // ---------- Rendering ----------
 
@@ -218,6 +249,13 @@ function render() {
   undoBtn.disabled = actions.length === 0;
 }
 
+// Call after every change to `actions`.
+function changed() {
+  version++;
+  render();
+  prepareShare();
+}
+
 // ---------- Crosshair drag ----------
 
 function toImage(e) {
@@ -277,8 +315,12 @@ function showSelection() {
 }
 
 canvas.addEventListener('pointerdown', (e) => {
-  if (e.button !== 0) return;
-  canvas.setPointerCapture(e.pointerId);
+  if (e.button !== 0 || drag) return;
+  try {
+    canvas.setPointerCapture(e.pointerId);
+  } catch {
+    // Not fatal: the drag still works while the finger stays on the image.
+  }
   const p = toImage(e);
   drag = { x0: p.x, y0: p.y, x1: p.x, y1: p.y, shift: e.shiftKey };
   showSelection();
@@ -300,7 +342,7 @@ function endDrag() {
   drag = null;
   sel.hidden = true;
   if (isMeaningful(a)) actions.push(a);
-  render();
+  changed();
 }
 canvas.addEventListener('pointerup', endDrag);
 canvas.addEventListener('pointercancel', endDrag);
@@ -312,7 +354,7 @@ function setTool(t) {
   document.querySelectorAll('.tool').forEach((b) => b.classList.toggle('active', b.dataset.tool === t));
   pixelOpts.hidden = t !== 'pixelate';
   colorOpts.hidden = t === 'pixelate';
-  hint.textContent = `${HINTS[t]} · ${MOD}V or drop to swap image`;
+  hint.textContent = hintFor(t);
 }
 
 function setColor(c) {
@@ -335,7 +377,7 @@ blockSize.addEventListener('input', () => {
 
 function undo() {
   actions.pop();
-  render();
+  changed();
 }
 undoBtn.addEventListener('click', undo);
 
@@ -354,11 +396,12 @@ document.addEventListener('keydown', (e) => {
 
 $('resetBtn').addEventListener('click', () => {
   actions = [];
-  render();
+  changed();
 });
 
 $('newBtn').addEventListener('click', () => fileInput.click());
-$('browseBtn').addEventListener('click', (e) => {
+// The browse link only exists on desktop; on touch devices the whole drop area is the button.
+$('browseBtn')?.addEventListener('click', (e) => {
   e.stopPropagation();
   fileInput.click();
 });
@@ -372,16 +415,51 @@ function showToast(msg) {
   showToast.t = setTimeout(() => (toast.hidden = true), 2600);
 }
 
-$('downloadBtn').addEventListener('click', async () => {
-  render();
-  const blob = await new Promise((res) => canvas.toBlob(res, 'image/png'));
-  const suggestedName = `${fileName}-blurred.png`;
+const exportName = () => `${fileName}-blurred.png`;
+const exportBlob = () => new Promise((res) => canvas.toBlob(res, 'image/png'));
+
+// The share sheet must open straight from the tap, so on phones the PNG is
+// built ahead of time whenever the image changes.
+let shareReady = null; // { version, file }
+
+function prepareShare() {
+  if (!isTouch || !navigator.canShare) return;
+  clearTimeout(prepareShare.t);
+  prepareShare.t = setTimeout(async () => {
+    const v = version;
+    const blob = await exportBlob();
+    if (v === version) shareReady = { version: v, file: new File([blob], exportName(), { type: 'image/png' }) };
+  }, 300);
+}
+
+async function shareToPhotos() {
+  let file = shareReady?.version === version ? shareReady.file : null;
+  if (!file) file = new File([await exportBlob()], exportName(), { type: 'image/png' });
+  if (!navigator.canShare({ files: [file] })) return false;
+  try {
+    await navigator.share({ files: [file] });
+  } catch (err) {
+    // NotAllowedError: the tap "expired" while the image was still being built.
+    if (err.name === 'NotAllowedError') {
+      shareReady = { version, file };
+      showToast('Ready. Tap Save again');
+    }
+    // AbortError: the share sheet was closed. Nothing to do.
+  }
+  return true;
+}
+
+downloadBtn.addEventListener('click', async () => {
+  // Phones: share sheet, which offers "Save Image" to Photos.
+  if (isTouch && navigator.canShare && (await shareToPhotos())) return;
+
+  const blob = await exportBlob();
 
   // Chrome / Edge / Arc: native "Save as" dialog so you can pick the folder.
   if (window.showSaveFilePicker) {
     try {
       const handle = await window.showSaveFilePicker({
-        suggestedName,
+        suggestedName: exportName(),
         types: [{ description: 'PNG image', accept: { 'image/png': ['.png'] } }],
       });
       const writable = await handle.createWritable();
@@ -397,7 +475,7 @@ $('downloadBtn').addEventListener('click', async () => {
   // Safari / Firefox fallback: regular download.
   const a = document.createElement('a');
   a.href = URL.createObjectURL(blob);
-  a.download = suggestedName;
+  a.download = exportName();
   a.click();
   setTimeout(() => URL.revokeObjectURL(a.href), 1000);
   showToast('Downloaded');

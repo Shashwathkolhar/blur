@@ -4,16 +4,16 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Blur</title>
-  <link rel="stylesheet" href="style.css?v=4">
+  <link rel="stylesheet" href="style.css?v=5">
 </head>
 <body>
   <header class="bar">
-    <div class="brand"><span class="dot"></span>Blur</div>
+    <div class="brand"><span class="dot"></span><span class="brand-name">Blur</span></div>
 
     <div class="actions" id="actions" hidden>
       <button class="btn ghost" id="undoBtn" title="Undo (⌘Z)">Undo</button>
       <button class="btn ghost" id="resetBtn">Clear</button>
-      <button class="btn ghost" id="newBtn">New image</button>
+      <button class="btn ghost" id="newBtn">New<span class="wide-only"> image</span></button>
       <button class="btn primary" id="downloadBtn">Download</button>
     </div>
   </header>
@@ -24,8 +24,8 @@
         <div class="icon">
           <svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="9" cy="9" r="1.8"/><path d="M21 15l-5-5L5 21"/></svg>
         </div>
-        <p class="title">Drop a screenshot here</p>
-        <p class="sub">or <button class="link" id="browseBtn">browse</button> · or paste with <span class="mod">⌘</span>V</p>
+        <p class="title" id="dropTitle">Drop a screenshot here</p>
+        <p class="sub" id="dropSub">or <button class="link" id="browseBtn">browse</button> · or paste with <span class="mod">⌘</span>V</p>
       </div>
       <input type="file" id="fileInput" accept="image/*" hidden>
     </section>
@@ -72,9 +72,11 @@
         </div>
       </div>
 
-      <div class="canvas-wrap" id="wrap">
-        <canvas id="canvas"></canvas>
-        <div class="sel" id="sel" hidden></div>
+      <div class="canvas-area" id="area">
+        <div class="canvas-wrap" id="wrap">
+          <canvas id="canvas"></canvas>
+          <div class="sel" id="sel" hidden></div>
+        </div>
       </div>
       <p class="hint" id="hint"></p>
     </section>
@@ -86,6 +88,6 @@
 
   <div class="toast" id="toast" hidden></div>
 
-  <script src="app.js?v=4"></script>
+  <script src="app.js?v=5"></script>
 </body>
 </html>
