@@ -7,6 +7,8 @@
   --blue: #2563eb;
   --blue-soft: #eaf1ff;
   --blue-dark: #1d4ed8;
+  /* Handwriting fonts that ship with each OS; Android's "cursive" is Dancing Script. */
+  --script: "Snell Roundhand", "Segoe Script", "Brush Script MT", "Dancing Script", cursive;
 }
 
 * { box-sizing: border-box; }
@@ -249,7 +251,189 @@ canvas {
   pointer-events: none;
 }
 
+.loading {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  background: rgba(255, 255, 255, .7);
+  color: var(--muted);
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+/* Footer: page switcher + hint */
+.footer {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+
+.pager {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+  color: var(--text);
+}
+
+.page-btn {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  border: 1px solid var(--line);
+  background: var(--bg);
+  color: var(--text);
+  font-size: 18px;
+  line-height: 1;
+  cursor: pointer;
+}
+.page-btn:hover:not(:disabled) { border-color: var(--blue); color: var(--blue); }
+.page-btn:disabled { opacity: .4; cursor: default; }
+
 .hint { margin: 0; color: var(--muted); font-size: 13px; text-align: center; }
+
+/* Saved signatures in the toolbar */
+.sigs { display: flex; align-items: center; gap: 8px; padding-right: 4px; }
+.sig-list { display: flex; gap: 6px; }
+
+.sig-thumb {
+  position: relative;
+  width: 76px;
+  height: 34px;
+  padding: 3px 6px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--bg);
+  cursor: pointer;
+}
+.sig-thumb img { width: 100%; height: 100%; object-fit: contain; display: block; }
+.sig-thumb.active { border-color: var(--blue); box-shadow: 0 0 0 2px var(--blue-soft); }
+
+.sig-del {
+  position: absolute;
+  top: -7px;
+  right: -7px;
+  width: 18px;
+  height: 18px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: var(--text);
+  color: #fff;
+  font-size: 12px;
+  line-height: 18px;
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity .12s;
+}
+.sig-thumb:hover .sig-del, .sig-thumb.active .sig-del { opacity: 1; }
+
+.btn.small { font-size: 13px; padding: 6px 10px; }
+
+/* Signature dialog */
+.sheet {
+  width: min(520px, calc(100vw - 32px));
+  padding: 20px;
+  border: 0;
+  border-radius: 16px;
+  background: var(--bg);
+  color: var(--text);
+  box-shadow: 0 24px 60px rgba(15, 23, 42, .25);
+}
+.sheet::backdrop { background: rgba(15, 23, 42, .35); }
+
+.sheet-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+.sheet-head h2 { margin: 0; font-size: 17px; font-weight: 650; }
+
+.tabs { padding: 3px; border-radius: 10px; background: var(--surface); }
+.tabs .tool { padding: 6px 14px; }
+.tabs .tool.active { background: var(--bg); box-shadow: 0 1px 2px rgba(15, 23, 42, .1); }
+
+.pad {
+  position: relative;
+  height: 180px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--surface);
+  overflow: hidden;
+}
+
+#sigPad {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  touch-action: none;
+  cursor: crosshair;
+}
+
+.pad-line {
+  position: absolute;
+  left: 24px;
+  right: 24px;
+  bottom: 44px;
+  border-bottom: 1.5px dashed #c8d4ea;
+  pointer-events: none;
+}
+.pad-hint {
+  position: absolute;
+  left: 24px;
+  bottom: 18px;
+  color: var(--muted);
+  font-size: 12px;
+  pointer-events: none;
+}
+.pad-clear { position: absolute; right: 14px; bottom: 14px; font-size: 13px; }
+
+.type-pane { display: flex; flex-direction: column; padding: 14px; gap: 8px; }
+.type-pane input {
+  font: inherit;
+  padding: 9px 12px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--bg);
+  color: var(--text);
+}
+.type-pane input:focus { outline: 2px solid var(--blue-soft); border-color: var(--blue); }
+.type-preview {
+  flex: 1;
+  display: grid;
+  place-items: center;
+  font-family: var(--script);
+  font-size: 44px;
+  line-height: 1.1;
+  overflow: hidden;
+  white-space: nowrap;
+}
+
+.sheet-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-top: 14px;
+  font-size: 14px;
+}
+.ink { display: flex; align-items: center; gap: 10px; color: var(--muted); }
+.check { display: flex; align-items: center; gap: 8px; cursor: pointer; }
+.check input { accent-color: var(--blue); width: 16px; height: 16px; }
+
+.sheet-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 18px;
+}
 
 .drop-overlay {
   position: fixed;
@@ -299,4 +483,19 @@ canvas {
   .swatch { width: 28px; height: 28px; }
   .slider input { width: 140px; }
   .hint { font-size: 12px; }
+  .footer { gap: 6px; }
+  .page-btn { width: 38px; height: 38px; }
+  .sig-thumb { width: 68px; height: 36px; }
+  .sig-del { opacity: 1; }
+
+  /* Signature dialog becomes a bottom sheet */
+  .sheet {
+    width: 100vw;
+    max-width: 100vw;
+    margin: auto 0 0;
+    border-radius: 18px 18px 0 0;
+    padding: 18px 16px calc(18px + env(safe-area-inset-bottom));
+  }
+  .pad { height: 200px; }
+  .sheet-actions .btn { flex: 1; padding: 11px; }
 }

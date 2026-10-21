@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Blur</title>
-  <link rel="stylesheet" href="style.css?v=5">
+  <link rel="stylesheet" href="style.css?v=6">
 </head>
 <body>
   <header class="bar">
@@ -12,8 +12,8 @@
 
     <div class="actions" id="actions" hidden>
       <button class="btn ghost" id="undoBtn" title="Undo (⌘Z)">Undo</button>
-      <button class="btn ghost" id="resetBtn">Clear</button>
-      <button class="btn ghost" id="newBtn">New<span class="wide-only"> image</span></button>
+      <button class="btn ghost" id="resetBtn" title="Remove everything on this page">Clear</button>
+      <button class="btn ghost" id="newBtn">Open<span class="wide-only"> file</span></button>
       <button class="btn primary" id="downloadBtn">Download</button>
     </div>
   </header>
@@ -24,10 +24,10 @@
         <div class="icon">
           <svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="9" cy="9" r="1.8"/><path d="M21 15l-5-5L5 21"/></svg>
         </div>
-        <p class="title" id="dropTitle">Drop a screenshot here</p>
+        <p class="title" id="dropTitle">Drop a screenshot or PDF here</p>
         <p class="sub" id="dropSub">or <button class="link" id="browseBtn">browse</button> · or paste with <span class="mod">⌘</span>V</p>
       </div>
-      <input type="file" id="fileInput" accept="image/*" hidden>
+      <input type="file" id="fileInput" accept="image/*,application/pdf,.pdf" hidden>
     </section>
 
     <section class="stage" id="stage" hidden>
@@ -53,6 +53,10 @@
             <svg viewBox="0 0 24 24"><path d="M5 19L19 5M10 5h9v9"/></svg>
             <span>Arrow</span>
           </button>
+          <button class="tool" data-tool="sign" title="Sign (S)">
+            <svg viewBox="0 0 24 24"><path d="M3 17c2.5-4 4.5-9 6.5-9s-1 9 1.5 9 3-5 4.5-5 1 3 2.5 3 2-1 3-2"/><path d="M3 21h18"/></svg>
+            <span>Sign</span>
+          </button>
         </div>
 
         <span class="divider"></span>
@@ -70,24 +74,76 @@
           <button class="swatch" data-color="#facc15" style="--c:#facc15" title="Yellow (4)"></button>
           <button class="swatch" data-color="#22c55e" style="--c:#22c55e" title="Green (5)"></button>
         </div>
+
+        <div class="sigs" id="signOpts" hidden>
+          <div class="sig-list" id="sigList"></div>
+          <button class="btn ghost small" id="newSigBtn">+ New</button>
+        </div>
       </div>
 
       <div class="canvas-area" id="area">
         <div class="canvas-wrap" id="wrap">
           <canvas id="canvas"></canvas>
           <div class="sel" id="sel" hidden></div>
+          <div class="loading" id="loading" hidden>Loading page…</div>
         </div>
       </div>
-      <p class="hint" id="hint"></p>
+
+      <div class="footer">
+        <div class="pager" id="pager" hidden>
+          <button class="page-btn" id="prevPage" title="Previous page (←)" aria-label="Previous page">‹</button>
+          <span id="pageLabel">1 / 1</span>
+          <button class="page-btn" id="nextPage" title="Next page (→)" aria-label="Next page">›</button>
+        </div>
+        <p class="hint" id="hint"></p>
+      </div>
     </section>
   </main>
 
+  <dialog class="sheet" id="sigDialog">
+    <form method="dialog" id="sigForm">
+      <div class="sheet-head">
+        <h2>Add your signature</h2>
+        <div class="seg tabs">
+          <button type="button" class="tool active" data-mode="draw">Draw</button>
+          <button type="button" class="tool" data-mode="type">Type</button>
+        </div>
+      </div>
+
+      <div class="pad" id="drawPane">
+        <canvas id="sigPad"></canvas>
+        <div class="pad-line"></div>
+        <span class="pad-hint" id="padHint">Sign here</span>
+        <button type="button" class="link pad-clear" id="sigClear">Clear</button>
+      </div>
+
+      <div class="pad type-pane" id="typePane" hidden>
+        <input type="text" id="sigText" placeholder="Type your name" autocomplete="name" maxlength="60">
+        <div class="type-preview" id="typePreview"></div>
+      </div>
+
+      <div class="sheet-row">
+        <div class="ink">
+          <span>Ink</span>
+          <button type="button" class="swatch active" data-ink="#111111" style="--c:#111111" title="Black"></button>
+          <button type="button" class="swatch" data-ink="#1d4ed8" style="--c:#1d4ed8" title="Blue"></button>
+        </div>
+        <label class="check"><input type="checkbox" id="sigRemember" checked> Save for next time</label>
+      </div>
+
+      <div class="sheet-actions">
+        <button type="button" class="btn ghost" id="sigCancel">Cancel</button>
+        <button type="button" class="btn primary" id="sigUse">Use signature</button>
+      </div>
+    </form>
+  </dialog>
+
   <div class="drop-overlay" id="dropOverlay" hidden>
-    <div>Drop to replace image</div>
+    <div>Drop to open</div>
   </div>
 
   <div class="toast" id="toast" hidden></div>
 
-  <script src="app.js?v=5"></script>
+  <script src="app.js?v=6"></script>
 </body>
 </html>
