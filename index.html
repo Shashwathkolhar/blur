@@ -4,11 +4,29 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Blur</title>
-  <link rel="stylesheet" href="style.css?v=6">
+  <link rel="stylesheet" href="style.css?v=7">
 </head>
 <body>
   <header class="bar">
-    <div class="brand"><span class="dot"></span><span class="brand-name">Blur</span></div>
+    <div class="brand">
+      <!-- Logo: a 4×4 mosaic of blues, softened with a Gaussian blur -->
+      <svg class="logo" viewBox="0 0 16 16" aria-hidden="true">
+        <defs>
+          <clipPath id="logoClip"><rect width="16" height="16" rx="4"/></clipPath>
+          <filter id="logoBlur" x="-20%" y="-20%" width="140%" height="140%"><feGaussianBlur stdDeviation="0.8"/></filter>
+        </defs>
+        <g clip-path="url(#logoClip)">
+          <rect width="16" height="16" fill="#3b82f6"/>
+          <g filter="url(#logoBlur)">
+            <rect x="0" y="0" width="4" height="4" fill="#2563eb"/><rect x="4" y="0" width="4" height="4" fill="#93b4f7"/><rect x="8" y="0" width="4" height="4" fill="#3b82f6"/><rect x="12" y="0" width="4" height="4" fill="#1d4ed8"/>
+            <rect x="0" y="4" width="4" height="4" fill="#60a5fa"/><rect x="4" y="4" width="4" height="4" fill="#1d4ed8"/><rect x="8" y="4" width="4" height="4" fill="#bfdbfe"/><rect x="12" y="4" width="4" height="4" fill="#3b82f6"/>
+            <rect x="0" y="8" width="4" height="4" fill="#1d4ed8"/><rect x="4" y="8" width="4" height="4" fill="#60a5fa"/><rect x="8" y="8" width="4" height="4" fill="#2563eb"/><rect x="12" y="8" width="4" height="4" fill="#93b4f7"/>
+            <rect x="0" y="12" width="4" height="4" fill="#3b82f6"/><rect x="4" y="12" width="4" height="4" fill="#bfdbfe"/><rect x="8" y="12" width="4" height="4" fill="#1d4ed8"/><rect x="12" y="12" width="4" height="4" fill="#60a5fa"/>
+          </g>
+        </g>
+      </svg>
+      <span class="brand-name">Blur</span>
+    </div>
 
     <div class="actions" id="actions" hidden>
       <button class="btn ghost" id="undoBtn" title="Undo (⌘Z)">Undo</button>
